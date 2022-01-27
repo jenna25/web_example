@@ -1,0 +1,94 @@
+---
+kind: pipeline
+name: build-and-deploy-version-preview.1.0
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+  - name: tag
+    image: hub.d.cisdigital.cn/drone/drone-tag:v1.1
+    environment:
+      TAG_FILE: .tags
+
+  - name: sonar
+    image: hub.d.cisdigital.cn/drone/maven-plugin:3.6.1-jdk-8-cisdi-cloud
+    commands:
+      - mvn sonar:sonar -DskipTests=true
+
+  - name: build
+    image: hub.d.cisdigital.cn/drone/maven-plugin:3.6.1-jdk-8-cisdi-cloud
+    commands:
+      - mvn clean package -D maven.test.skip=true -P production
+
+  - name: docker
+    image: hub.d.cisdigital.cn/drone/plugins/docker:19.03.8
+    settings:
+      dockerfile: ./Dockerfile
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      repo: hub.d.cisdigital.cn/databench-dev/bitmagic-server
+      registry: hub.d.cisdigital.cn
+      insecure: true
+
+  - name: paas
+    image: hub.d.cisdigital.cn/drone/drone-paas-plugin:latest
+    settings:
+      application_id: 137
+      application_cluster: dev_paas
+      application_deployment_id: 786
+      application_deployment_replicas: 1
+      application_deployment_image: hub.d.cisdigital.cn/databench-dev/bitmagic-server
+      server_url: http://drone-paas-server.kube-drone:8080
+
+trigger:
+  branch:
+    - master
+  event:
+    - push
+
+---
+kind: pipeline
+name: build-and-deploy-version-production.1.0
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+  - name: tag
+    image: hub.d.cisdigital.cn/drone/drone-tag:v1.1
+    environment:
+      TAG_FILE: .tags
+
+  - name: build
+    image: hub.d.cisdigital.cn/drone/maven-plugin:3.6.1-jdk-8-cisdi-cloud
+    commands:
+      - mvn clean package -D maven.test.skip=true -P production
+
+  - name: docker
+    image: hub.d.cisdigital.cn/drone/plugins/docker:19.03.8
+    settings:
+      dockerfile: ./Dockerfile
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      repo: hub.d.cisdigital.cn/databench-pro/bitmagic-server
+      registry: hub.d.cisdigital.cn
+      insecure: true
+
+  - name: paas
+    image: hub.d.cisdigital.cn/drone/drone-paas-plugin:latest
+    settings:
+      application_id: 139
+      application_cluster: dev_paas
+      application_deployment_id: 787
+      application_deployment_replicas: 1
+      application_deployment_image: hub.d.cisdigital.cn/databench-pro/bitmagic-server
+      server_url: http://drone-paas-server.kube-drone:8080
+
+trigger:
+  event:
+    - tag

@@ -1,0 +1,118 @@
+# 项目配置
+spring:
+  application:
+    name: bitmagic-server
+  main:
+    allow-bean-definition-overriding: true
+  aop:
+    proxy-target-class: true
+  # 数据源
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 7170000
+      maximum-pool-size: 10
+      read-only: false
+    type: com.zaxxer.hikari.HikariDataSource
+  # flyway
+  flyway:
+    baseline-on-migrate: true
+    baseline-version: 1
+    clean-disabled: true
+    enabled: true
+    encoding: UTF-8
+    locations: classpath:db/migration
+    out-of-order: false
+    table: flyway_schema_history
+    validate-on-migrate: true
+  # 定时任务
+  quartz:
+    jdbc:
+      initialize-schema: NEVER
+    job-store-type: jdbc
+    properties:
+      org:
+        quartz:
+          jobStore:
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX
+            clusterCheckinInterval: 20000
+            dataSource: quartzDataSource
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+            isClustered: true
+            misfireThreshold: 60000
+            tablePrefix: QRTZ_
+          scheduler:
+            instanceId: AUTO
+            instanceName: ${spring.application.name}
+          threadPool:
+            class: org.quartz.simpl.SimpleThreadPool
+            threadCount: 20
+            threadPriority: 5
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  jackson:
+    deserialization:
+      FAIL_ON_UNKNOWN_PROPERTIES: true
+    parser:
+      ALLOW_NON_NUMERIC_NUMBERS: true
+  jpa:
+    generate-ddl: false
+    hibernate:
+      use-new-id-generator-mappings: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect.storage_engine: innodb
+        format_sql: true
+        hbm2ddl:
+          auto: none
+        jdbc:
+          batch_size: 100
+          batch_versioned_data: true
+        order_inserts: true
+        order_updates: true
+        show_sql: false
+        snowflake_data_center_id: 1
+        snowflake_worker_id: 1
+    show-sql: false
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+
+# 青峰认证
+qingbee:
+  security:
+    resource:
+      permission-ant-path:
+        - /**/healthz/**
+        - /**/doc.html
+        - /**/v1/open/api/**
+        - /**/errorCode/**
+        - /**/v1/srs/callback
+        - /**/v*/open-api/**
+        - /**/v2/api-docs
+        - /**/webjars/**
+        - /**/swagger-resources/**
+      token-header: Authorization
+
+# segma认证
+security:
+  oauth2:
+    resource:
+      permissionAntPath:
+        - /**/healthz/**
+        - /**/doc.html
+        - /**/v1/open/api/**
+        - /**/errorCode/**
+        - /**/v1/srs/callback
+      prefer-token-info: false
+
+# 日志
+logging:
+  config: classpath:logback-spring.xml

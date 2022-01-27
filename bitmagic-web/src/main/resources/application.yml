@@ -1,0 +1,112 @@
+#app:
+#  id: bit-magic
+#apollo:
+#  meta: http://apollo-config.d.cisdigital.cn
+#  bootstrap:
+#    enabled: true
+#    namespaces: application
+
+# apollo中bitmagic完整配置
+bitmagic:
+  port: 8020
+  context-path: /bitmagic
+  datasource:
+    url: jdbc:mysql://10.73.13.59:31309/bitmagic?useSSL=true&verifyServerCertificate=false&characterEncoding=UTF-8&rewriteBatchedStatements=true&serverTimezone=GMT%2B8
+    username: root
+    password: 123@DataBench
+  paas-error:
+    host: http://127.0.0.1:8080
+    offline: true
+  qingbee:
+    enable: true
+    bearer-type: Bear
+    url: http://pet.qbee.qingtui.cn
+  security:
+    client-id: segma_data_assets
+    client-secret: Kos4Qg6opZcxGDQa
+    enable: false
+    url: https://auth.segma.tech
+  prometheus:
+    server: http://prometheus-server.kube-monitor:80
+  data-assets:
+    process-api-url: http://data-assets-process-api.d.cisdigital.cn
+    process-api-max-total: 20
+  hdfs:
+    namenode: hdfs://dev-master2.segma.tech:8020
+    nameservices:
+    namenode-alias:
+    rpc-addresses:
+    user: dev
+  # flink 任务配置
+  flink:
+    # path: hdfs://dev-master2.segma.tech:8020/user/flink
+    path: hdfs://dev-master2.segma.tech:8020/user/flink/1.13.1
+    flink-conf-url: ${bitmagic.flink.path}/conf
+    flinkLibs: ${bitmagic.flink.path}/lib
+    yarnPath: ${bitmagic.flink.path}/conf/yarn-site.xml
+    corePath: ${bitmagic.flink.path}/conf/core-site.xml
+    userJarPath: ${bitmagic.flink.path}/flink-cdc.jar
+    flinkDistJar: ${bitmagic.flink.path}/dist/flink-dist_2.11.jar
+    savePointDir: ${bitmagic.flink.path}/savepoints/
+    checkPointDir: ${bitmagic.flink.path}/checkpoints/
+    paramApiUrl: ${bitmagic.apiUrl}/bitmagic/v1/open/api/flink-param
+    flinkDebug: not-debug
+  debezium:
+    backProcessTopic: cdc_back_process_test
+    bootstrapUrl: dev-node1:9092,dev-node2:9092,dev-node3:9092
+    url: http://10.73.13.51:8083
+
+# 项目配置
+spring:
+  profiles:
+    active: development
+  kafka:
+    bootstrap-servers: ${bitmagic.debezium.bootstrapUrl}
+    consumer:
+      auto-commit-interval: 100
+      auto-offset-reset: earliest
+      enable-auto-commit: true
+      group-id: bigmagic_consumer_group_test
+      max-poll-records: 1000
+# ===========以下配置来源于bitmagic下，不需要额外修改===========
+  # 数据源
+  datasource:
+    url: ${bitmagic.datasource.url}
+    username: ${bitmagic.datasource.username}
+    password: ${bitmagic.datasource.password}
+
+# 错误码系统
+paas-error:
+  error-code-system-host: ${bitmagic.paas-error.host:http://127.0.0.1:8080}
+  off-line: ${bitmagic.paas-error.offline:true}
+  save-strategy: cache
+  system-code: ${bitmagic.paas-error.system-code:BMC}
+
+# 青峰认证
+qingbee:
+  security:
+    enable: ${bitmagic.qingbee.enable:true}
+    resource:
+      bearer-type: ${bitmagic.qingbee.bearer-type:Bear}
+      check-token-url: ${bitmagic.qingbee.url}/auth/api/sysmgr/sso/check
+      user-info-url: ${bitmagic.qingbee.url}/auth/api/sysmgr/user/info
+
+# segma认证
+security:
+  oauth2:
+    client:
+      client-id: ${bitmagic.security.client-id:segma_data_assets}
+      client-secret: ${bitmagic.security.client-secret:Kos4Qg6opZcxGDQa}
+    enable: ${bitmagic.security.enable:false}
+    resource:
+      token-info-uri: ${bitmagic.security.url:https://auth.segma.tech}/oauth/token
+      user-info-uri: ${bitmagic.security.url:https://auth.segma.tech}/me
+
+# 项目端口
+server:
+  port: ${bitmagic.port:80}
+  servlet:
+    context-path: ${bitmagic.context-path:/bitmagic}
+
+
+
